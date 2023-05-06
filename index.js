@@ -120,7 +120,13 @@ app.post("/register", async (req, res) => {
   }
 })
 
-const server = app.listen(4040)
+// const server = app.listen(4040)
+
+const port = process.env.PORT || 4040
+const server = app.listen(port, () => {
+  console.log(`Server is running on port ${port}`)
+})
+// updated for heroku deploy
 
 const wss = new ws.WebSocketServer({ server })
 wss.on("connection", (connection, req) => {
