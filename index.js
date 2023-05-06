@@ -126,7 +126,7 @@ const port = process.env.PORT || 4040
 const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
-// updated for heroku deploy
+// updated for heroku deployy
 
 const wss = new ws.WebSocketServer({ server })
 wss.on("connection", (connection, req) => {
