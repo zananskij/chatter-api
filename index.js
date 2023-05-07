@@ -53,6 +53,10 @@ app.get("/test", (req, res) => {
   res.json("test ok")
 })
 
+app.get("/", (req, res) => {
+  res.send("Backend API is up and running.")
+})
+
 app.get("/messages/:userId", async (req, res) => {
   const { userId } = req.params
   const userData = await getUserDataFromRequest(req)
