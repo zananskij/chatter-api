@@ -9,7 +9,10 @@ const User = require("./models/User")
 const Message = require("./models/Message")
 const ws = require("ws")
 const fs = require("fs")
+const { Router } = require("express")
+const { db } = require("./models/User")
 
+// env variable / db connection
 dotenv.config()
 mongoose.connect(process.env.MONGO_URL, (err) => {
   console.log("Connected to MongoDB")
@@ -18,16 +21,11 @@ mongoose.connect(process.env.MONGO_URL, (err) => {
 const jwtSecret = process.env.JWT_SECRET
 const bcryptSalt = bcrypt.genSaltSync(10)
 
+// express app setup
 const app = express()
 app.use("/uploads", express.static(__dirname + "/uploads"))
 app.use(express.json())
 app.use(cookieParser())
-// app.use(
-//   cors({
-//     credentials: true,
-//     origin: "http://localhost:5173",
-//   })
-// )
 app.use(
   cors({
     credentials: true,
@@ -35,6 +33,7 @@ app.use(
   })
 )
 
+// extract token from req cookie, verifies, then return userData. Otherwise reject promise
 async function getUserDataFromRequest(req) {
   return new Promise((resolve, reject) => {
     const token = req.cookies?.token
@@ -49,14 +48,15 @@ async function getUserDataFromRequest(req) {
   })
 }
 
+// testing routes
 app.get("/test", (req, res) => {
   res.json("test ok")
 })
-
 app.get("/", (req, res) => {
   res.send("Backend API is up and running.")
 })
 
+// get all msgs between current user and selected conversation
 app.get("/messages/:userId", async (req, res) => {
   const { userId } = req.params
   const userData = await getUserDataFromRequest(req)
@@ -68,11 +68,13 @@ app.get("/messages/:userId", async (req, res) => {
   res.json(messages)
 })
 
+// get all users from DB, return _id & username
 app.get("/people", async (req, res) => {
   const users = await User.find({}, { _id: 1, username: 1 })
   res.json(users)
 })
 
+// get user's data if cookie contains valid token
 app.get("/profile", (req, res) => {
   const token = req.cookies?.token
   if (token) {
@@ -85,6 +87,7 @@ app.get("/profile", (req, res) => {
   }
 })
 
+// verifies valid credentials, new token is signed & sent back in response
 app.post("/login", async (req, res) => {
   const { username, password } = req.body
   const foundUser = await User.findOne({ username })
@@ -100,10 +103,12 @@ app.post("/login", async (req, res) => {
   }
 })
 
+// clear token with an empty string
 app.post("/logout", (req, res) => {
   res.cookie("token", "", { sameSite: "none", secure: true }).json("ok")
 })
 
+// hashes password and stores new user in db, new token is signed & sent
 app.post("/register", async (req, res) => {
   const { username, password } = req.body
   try {
@@ -124,15 +129,16 @@ app.post("/register", async (req, res) => {
   }
 })
 
-// const server = app.listen(4040)
-
+// start express server
 const port = process.env.PORT || 4040
 const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
-// updated for heroku deployy
+// updated for heroku deploy
 
+// new WS server created on same port
 const wss = new ws.WebSocketServer({ server })
+// listens for new WS connection
 wss.on("connection", (connection, req) => {
   function notifyAboutOnlinePeople() {
     ;[...wss.clients].forEach((client) => {
@@ -144,8 +150,8 @@ wss.on("connection", (connection, req) => {
     })
   }
 
+  // making sure connection is alive
   connection.isAlive = true
-
   connection.timer = setInterval(() => {
     connection.ping()
     connection.deathTimer = setTimeout(() => {
@@ -161,7 +167,7 @@ wss.on("connection", (connection, req) => {
     clearTimeout(connection.deathTimer)
   })
 
-  // read username and id form the cookie for this connection
+  // authenticate connection using token
   const cookies = req.headers.cookie
   if (cookies) {
     const tokenCookieString = cookies.split(";").find((str) => str.startsWith("token="))
@@ -178,6 +184,7 @@ wss.on("connection", (connection, req) => {
     }
   }
 
+  // listens for msgs from connection
   connection.on("message", async (message) => {
     const messageData = JSON.parse(message.toString())
     const { recipient, text, file } = messageData
