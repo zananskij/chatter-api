@@ -2,13 +2,13 @@
 
 ## Overview
 
-This repository contains the backend code for my chatter messenger app. It provides the server-side functionality required for user authentication, message handling, and WebSocket communication. The chat messenger app is built using Node.js and Express.js for the server-side implementation. It utilizes MongoDB as the database for storing user information and messages. WebSocket is used to enable real-time communication between users.
+This repository contains the backend code for my Chatter Messenger app. It provides the server-side functionality required for user authentication, real-time message handling, and WebSocket communication. The chat messenger app is built using Node.js and Express.js for the server-side implementation. It utilizes MongoDB as the database for storing user information and messages. JSON Web Tokens (JWT) are used for user authentication and authorization, while Bcrypt.js is used for password hashing to enhance security. Additionally, the backend handles file system operations and sharing functionality.
 
-## Deployed Link (Backend / API)
+## Deployed Link
 
-https://chatter-messenger-backend.herokuapp.com/
+https://chatter-messenger.herokuapp.com/
 
-## Skills Utilized
+## Skills Utilized:
 
 - Node.js
 - Express.js
